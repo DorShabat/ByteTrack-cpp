@@ -1,4 +1,5 @@
-#pragma once
+#ifndef BYTE_TRACK_KALMAN_FILTER_H_
+#define BYTE_TRACK_KALMAN_FILTER_H_
 
 #include "Eigen/Dense"
 
@@ -37,3 +38,5 @@ private:
                  const StateMean& mean, const StateCov& covariance);
 };
 }
+
+#endif  // BYTE_TRACK_KALMAN_FILTER_H_

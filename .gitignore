@@ -32,3 +32,8 @@ build/*
 *.exe
 *.out
 *.app
+/build-win
+/cmake
+/python/data
+/python/output
+python/.DS_Store

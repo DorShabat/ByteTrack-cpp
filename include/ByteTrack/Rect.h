@@ -1,4 +1,5 @@
-#pragma once
+#ifndef BYTE_TRACK_RECT_H_
+#define BYTE_TRACK_RECT_H_
 
 #include "Eigen/Dense"
 
@@ -52,3 +53,5 @@ template<typename T>
 Rect<T> generate_rect_by_xyah(const Xyah<T>& xyah);
 
 }
+
+#endif  // BYTE_TRACK_RECT_H_

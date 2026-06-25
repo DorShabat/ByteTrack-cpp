@@ -1,4 +1,24 @@
-#pragma once
+#ifndef BYTE_TRACK_BYTE_TRACKER_H_
+#define BYTE_TRACK_BYTE_TRACKER_H_
+
+#ifndef BYTETRACK_API
+#  if defined(_WIN32) || defined(__CYGWIN__)
+#    ifdef BYTETRACK_EXPORTS
+#      define BYTETRACK_API __declspec(dllexport)
+#    else
+#      define BYTETRACK_API __declspec(dllimport)
+#    endif
+#    define BYTETRACK_LOCAL
+#  else
+#    if __GNUC__ >= 4
+#      define BYTETRACK_API __attribute__((visibility("default")))
+#      define BYTETRACK_LOCAL __attribute__((visibility("hidden")))
+#    else
+#      define BYTETRACK_API
+#      define BYTETRACK_LOCAL
+#    endif
+#  endif
+#endif
 
 #include "ByteTrack/STrack.h"
 #include "ByteTrack/lapjv.h"
@@ -12,7 +32,7 @@
 
 namespace byte_track
 {
-class BYTETracker
+class BYTETRACK_API BYTETracker
 {
 public:
     using STrackPtr = std::shared_ptr<STrack>;
@@ -73,3 +93,5 @@ private:
     std::vector<STrackPtr> removed_stracks_;
 };
 }
+
+#endif  // BYTE_TRACK_BYTE_TRACKER_H_

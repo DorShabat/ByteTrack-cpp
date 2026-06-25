@@ -1,4 +1,5 @@
-#pragma once
+#ifndef BYTE_TRACK_STRACK_H_
+#define BYTE_TRACK_STRACK_H_
 
 #include "ByteTrack/Rect.h"
 #include "ByteTrack/KalmanFilter.h"
@@ -57,3 +58,5 @@ private:
     void updateRect();
 };
 }
+
+#endif  // BYTE_TRACK_STRACK_H_

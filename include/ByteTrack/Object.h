@@ -1,4 +1,5 @@
-#pragma once
+#ifndef BYTE_TRACK_OBJECT_H_
+#define BYTE_TRACK_OBJECT_H_
 
 #include "ByteTrack/Rect.h"
 
@@ -15,3 +16,5 @@ struct Object
            const float &_prob);
 };
 }
+
+#endif  // BYTE_TRACK_OBJECT_H_
