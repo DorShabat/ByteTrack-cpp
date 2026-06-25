@@ -16,6 +16,10 @@ from ctypes import (
 import cv2
 
 
+TRACK_STATE_TRACKED = 1
+TRACK_STATE_LOST = 2
+
+
 # ============================================================
 # C structs matching bytetrack_c.h
 # ============================================================
@@ -267,26 +271,42 @@ def draw_detections(frame, detections):
         )
 
 
-def draw_tracks(frame, tracks):
+def draw_tracks(frame, tracks, current_frame_idx):
+    tracked_count = 0
+    predicted_count = 0
+
     for t in tracks:
         x1 = int(round(t.x))
         y1 = int(round(t.y))
         x2 = int(round(t.x + t.width))
         y2 = int(round(t.y + t.height))
 
-        # ByteTrack output: red, text above the box.
-        cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 0, 255), 2)
+        if t.state == TRACK_STATE_LOST:
+            predicted_count += 1
+            color = (0, 165, 255)  # orange
+            thickness = 1
+            lost_age = max(0, int(current_frame_idx - t.frame_id))
+            label = f"ID {t.track_id} pred +{lost_age}"
+        else:
+            tracked_count += 1
+            color = (0, 0, 255)
+            thickness = 2
+            label = f"ID {t.track_id} {t.score:.2f}"
+
+        cv2.rectangle(frame, (x1, y1), (x2, y2), color, thickness)
 
         cv2.putText(
             frame,
-            f"ID {t.track_id} {t.score:.2f}",
+            label,
             (x1, max(20, y1 - 8)),
             cv2.FONT_HERSHEY_SIMPLEX,
             0.6,
-            (0, 0, 255),
-            2,
+            color,
+            thickness,
             cv2.LINE_AA,
         )
+
+    return tracked_count, predicted_count
 
 
 # ============================================================
@@ -304,6 +324,8 @@ def run(
     draw_tracks_flag=True,
 ):
     detection_interval = max(1, int(detection_interval))
+    # Keep predicted output across skipped detector frames.
+    os.environ["BYTETRACK_LOST_OUTPUT_TTL"] = str(max(1, detection_interval - 1))
 
     print("trying to load detections from CSV...")
     detections_by_frame = load_detections_csv(csv_path)
@@ -364,11 +386,13 @@ def run(
                 draw_detections(frame, detections)
 
             if draw_tracks_flag:
-                draw_tracks(frame, tracks)
+                tracked_count, predicted_count = draw_tracks(frame, tracks, frame_idx)
+            else:
+                tracked_count, predicted_count = 0, 0
 
             cv2.putText(
                 frame,
-                f"Frame {frame_idx}/{total_frames} | Dets {len(detections)} | Tracks {len(tracks)} | DetEvery {detection_interval}",
+                f"Frame {frame_idx}/{total_frames} | Dets {len(detections)} | Tracked {tracked_count} | Pred {predicted_count} | DetEvery {detection_interval}",
                 (20, 35),
                 cv2.FONT_HERSHEY_SIMPLEX,
                 0.8,
@@ -400,7 +424,7 @@ if __name__ == "__main__":
     run(
         video_path="data/input.MOV",
         csv_path="data/detections.csv",
-        dll_path="artifacts/libbytetrack",  # extension auto-resolved per platform
+        dll_path="../build/libbytetrack",  # load rebuilt library directly
         output_path="output/tracked.mp4",
-        detection_interval=2,  # try: 2, 4, or any X>=1
+        detection_interval=10,  # try: 2, 4, or any X>=1
     )

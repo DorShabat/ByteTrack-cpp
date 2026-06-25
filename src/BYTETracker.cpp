@@ -1,5 +1,6 @@
 #include "ByteTrack/BYTETracker.h"
 
+#include <cstdlib>
 #include <cstddef>
 #include <limits>
 #include <map>
@@ -28,6 +29,24 @@ byte_track::BYTETracker::~BYTETracker()
 
 std::vector<byte_track::BYTETracker::STrackPtr> byte_track::BYTETracker::update(const std::vector<Object>& objects)
 {
+    // Keep predicted output for a short gap when detector is skipped.
+    // Can be overridden with BYTETRACK_LOST_OUTPUT_TTL (non-negative integer).
+    static const size_t kLostOutputTtlFrames = []() -> size_t {
+        const char* ttl_env = std::getenv("BYTETRACK_LOST_OUTPUT_TTL");
+        if (ttl_env == nullptr)
+        {
+            return 1;
+        }
+
+        const long parsed = std::strtol(ttl_env, nullptr, 10);
+        if (parsed < 0)
+        {
+            return 0;
+        }
+
+        return static_cast<size_t>(parsed);
+    }();
+
     ////////////////// Step 1: Get detections //////////////////
     frame_id_++;
 
@@ -220,6 +239,15 @@ std::vector<byte_track::BYTETracker::STrackPtr> byte_track::BYTETracker::update(
         if (track->isActivated())
         {
             output_stracks.push_back(track);
+        }
+    }
+
+    for (const auto &lost_track : lost_stracks_)
+    {
+        const size_t lost_age = frame_id_ - lost_track->getFrameId();
+        if (lost_age <= kLostOutputTtlFrames)
+        {
+            output_stracks.push_back(lost_track);
         }
     }
 
