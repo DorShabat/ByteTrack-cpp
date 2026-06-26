@@ -37,6 +37,29 @@ set_target_properties(cvtracker PROPERTIES
 )
 
 # ---------------------------------------------------------------------------
+# Bundling: on Windows and Linux copy OpenCV libraries next to the tracker
+# so the output folder is self-contained without a system-wide OpenCV install.
+# On Apple the system Homebrew install is used as-is (no bundling).
+# ---------------------------------------------------------------------------
+if(NOT APPLE)
+    # Set RPATH so the loader finds the bundled libs in the same directory.
+    set_target_properties(cvtracker PROPERTIES
+        BUILD_RPATH  "$ORIGIN"
+        INSTALL_RPATH "$ORIGIN"
+    )
+
+    # Copy the three required OpenCV shared libraries after every build.
+    foreach(_lib opencv_core opencv_imgproc opencv_tracking)
+        add_custom_command(TARGET cvtracker POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                $<TARGET_FILE:${_lib}>
+                $<TARGET_FILE_DIR:cvtracker>
+            COMMENT "Bundling ${_lib} next to cvtracker"
+        )
+    endforeach()
+endif()
+
+# ---------------------------------------------------------------------------
 # Optional: install rules
 # ---------------------------------------------------------------------------
 install(TARGETS cvtracker
