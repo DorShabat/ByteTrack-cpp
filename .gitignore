@@ -38,3 +38,4 @@ build/*
 /python/output
 python/.DS_Store
 /tracker/build
+/motion_camera_tracking/build
